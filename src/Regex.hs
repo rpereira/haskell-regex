@@ -10,6 +10,9 @@ module Regex (
 
 import GHC.Exts (IsString(..))
 
+infixl 6 <+>
+infixl 7 <>
+
 data Regex = Zero                   -- empty
             | One                   -- epsilon
             | Lit Char              -- single character
@@ -17,6 +20,19 @@ data Regex = Zero                   -- empty
             | Cat  Regex Regex      -- concatenation (.)
             | Many Regex            -- repetition (*)
             deriving Show
+
+instance IsString Regex where
+  -- fromString :: [Char] -> Regex
+  fromString = foldr (\x re -> Cat (Lit x) re) One
+
+(<+>) :: Regex -> Regex -> Regex
+(<+>) = Plus
+
+(<>) :: Regex -> Regex -> Regex
+(<>) = Plus
+
+many :: Regex -> Regex
+many = Many
 
 match :: Regex -> String -> Bool
 match re str = accept re str null
@@ -35,19 +51,3 @@ accept (Many e) str k = acceptMany e str k
 
 acceptMany e str k = k str || -- epsilon
   accept e str (\str' -> str' /= str && acceptMany e str' k)
-
-infixl 6 <+>
-infixl 7 <>
-
-instance IsString Regex where
-  -- fromString :: [Char] -> Regex
-  fromString = foldr (\x re -> Cat (Lit x) re) One
-
-(<+>) :: Regex -> Regex -> Regex
-(<+>) = Plus
-
-(<>) :: Regex -> Regex -> Regex
-(<>) = Plus
-
-many :: Regex -> Regex
-many = Many
