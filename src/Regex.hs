@@ -1,4 +1,14 @@
-module Regex where
+{-# LANGUAGE OverloadedStrings #-}
+
+module Regex (
+             Regex
+             , match
+             , many
+             , (<+>)
+             , (<>)
+             ) where
+
+import GHC.Exts (IsString(..))
 
 data Regex = Zero                   -- empty
             | One                   -- epsilon
@@ -25,3 +35,19 @@ accept (Many e) str k = acceptMany e str k
 
 acceptMany e str k = k str || -- epsilon
   accept e str (\str' -> str' /= str && acceptMany e str' k)
+
+infixl 6 <+>
+infixl 7 <>
+
+instance IsString Regex where
+  -- fromString :: [Char] -> Regex
+  fromString = foldr (\x re -> Cat (Lit x) re) One
+
+(<+>) :: Regex -> Regex -> Regex
+(<+>) = Plus
+
+(<>) :: Regex -> Regex -> Regex
+(<>) = Plus
+
+many :: Regex -> Regex
+many = Many
