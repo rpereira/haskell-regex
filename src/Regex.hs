@@ -9,9 +9,19 @@ data Regex = Zero                   -- empty
             deriving Show
 
 match :: Regex -> String -> Bool
-match = undefined
+match re str = accept re str null
 
 type Cont = String -> Bool
 
 accept :: Regex -> String -> Cont -> Bool
-accept = undefined
+accept (Lit c) str k = case str of
+                         [] -> False
+                         (x:xs) -> x == c && k xs
+accept Zero str k = False
+accept One str k = k str
+accept (Cat e1 e2) str k = accept e1 str (\str' -> accept e2 str' k)
+accept (Plus e1 e2) str k = accept e1 str k || accept e2 str k
+accept (Many e) str k = acceptMany e str k
+
+acceptMany e str k = k str || -- epsilon
+  accept e str (\str' -> str' /= str && acceptMany e str' k)
